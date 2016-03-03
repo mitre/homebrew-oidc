@@ -15,6 +15,22 @@ class NgxOpenresty < Formula
     sha256 "68e38feeb66052e29ad1935a71b875194ed8b9c67c2223af5f4d4e3e2464ed97"
   end
 
+  resource "lua-resty-http" do
+    url "https://github.com/pintsized/lua-resty-http/archive/v0.07.tar.gz"
+    sha256 "1c6aa06c9955397c94e9c3e0c0fba4e2704e85bee77b4512fb54ae7c25d58d86"
+  end
+
+  resource "lua-resty-session" do
+    url "https://github.com/bungle/lua-resty-session/archive/v2.3.tar.gz"
+    sha256 "17c0d7b201aed607de1363160c3fcf6372a1882e21957016a8aede39f1d44a17"
+  end
+
+  resource "lua-resty-openidc" do
+    url "https://github.com/pingidentity/lua-resty-openidc.git", :using => :git
+  end
+
+  skip_clean("nginx/logs")
+
   def install
     system "./configure", '--with-cc-opt=-I/usr/local/opt/openssl/include/ -I/usr/local/opt/pcre/include/',
                           '--with-ld-opt=-L/usr/local/opt/openssl/lib/ -L/usr/local/opt/pcre/lib/',
@@ -30,6 +46,21 @@ class NgxOpenresty < Formula
                               "--with-lua-include=#{prefix}/luajit/include/luajit-2.1"
         system "make", "build"
         system "make", "install"
+      end
+
+      resource("lua-resty-http").stage buildpath/"lua-resty-http_install"
+      cd buildpath/"lua-resty-http_install" do
+        system "#{prefix}/luajit/bin/luarocks", "make", "lua-resty-http-0.07-0.rockspec"
+      end
+
+      resource("lua-resty-session").stage buildpath/"lua-resty-session_install"
+      cd buildpath/"lua-resty-session_install" do
+        system "#{prefix}/luajit/bin/luarocks", "make", "lua-resty-session-dev-1.rockspec"
+      end
+
+      resource("lua-resty-openidc").stage buildpath/"lua-resty-openidc_install"
+      cd buildpath/"lua-resty-openidc_install" do
+        (prefix/"lualib/resty").install Dir["lib/resty/*.lua"]
       end
     end
   end
